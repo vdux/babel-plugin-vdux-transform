@@ -1,26 +1,23 @@
 {
-  "name": "babel-plugin-react-transform",
-  "version": "2.0.2",
-  "description": "Babel plugin to instrument React components with custom transforms",
+  "name": "babel-plugin-vdux-transform",
+  "version": "1.0.0",
+  "description": "Babel plugin to instrument vdux components with custom transforms",
   "main": "lib/index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gaearon/babel-plugin-react-transform.git"
+    "url": "git+https://github.com/vdux/babel-plugin-vdux-transform.git"
   },
-  "author": "Dan Abramov <dan.abramov@me.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/gaearon/babel-plugin-react-transform/issues"
+    "url": "https://github.com/vdux/babel-plugin-vdux-transform/issues"
   },
-  "homepage": "https://github.com/gaearon/babel-plugin-react-transform#readme",
+  "homepage": "https://github.com/gaearon/babel-plugin-vdux-transform#readme",
   "devDependencies": {
     "babel-cli": "^6.2.0",
     "babel-core": "^6.2.1",
     "babel-eslint": "^4.1.6",
     "babel-preset-es2015": "^6.1.18",
     "babel-register": "^6.2.0",
-    "eslint": "^1.10.3",
-    "eslint-plugin-react": "^3.11.2",
     "mocha": "^2.2.5",
     "rimraf": "^2.4.3"
   },
@@ -33,11 +30,11 @@
   },
   "keywords": [
     "babel-plugin",
-    "react-transform",
+    "vdux-transform",
     "instrumentation",
     "dx",
-    "react",
-    "reactjs",
+    "vdux",
+    "deku",
     "components"
   ],
   "dependencies": {
