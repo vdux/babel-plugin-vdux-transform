@@ -9,7 +9,7 @@ This plugin doesn't do anything on its own, it just enables you to write transfo
 ```javascript
 {
   plugins: [
-    ["react-transform", {
+    ["vdux-transform", {
       "transforms": [{
         // can be an NPM module name or a local path
         "transform": "vdux-transform-hmr"
