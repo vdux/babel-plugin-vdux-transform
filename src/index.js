@@ -28,6 +28,26 @@ export default function ({ types: t, template }) {
     return false
   }
 
+  function isFunctionalComponent (path) {
+    const node = path.node
+
+    if (t.isFunctionDeclaration(node)) {
+      if (/^[A-Z]/.test(node.id.name)) {
+        let foundJsx = false
+
+        path.traverse({
+          JSXIdentifier () {
+            foundJsx = true
+          }
+        })
+
+        return foundJsx
+      }
+    }
+
+    return false
+  }
+
   // `foo({ displayName: 'NAME' })` => 'NAME'
   function getDisplayName (node) {
     const property = find(node.properties, node => node.key.name === 'displayName')
@@ -44,8 +64,22 @@ export default function ({ types: t, template }) {
       t.callExpression(wrapperFunctionId, [
         t.stringLiteral(componentId)
       ]),
-      [node]
-    )
+    [node])
+  }
+
+  function wrapFunctionComponent (node, componentId, wrapperFunctionId) {
+    const component = toObjectExpression({
+      render: t.toExpression(node)
+    })
+
+    component[VISITED_KEY] = true
+    return t.variableDeclaration('const', [
+      t.variableDeclarator(node.id, t.toExpression(wrapComponent(
+        component,
+        componentId,
+        wrapperFunctionId
+      )))
+    ])
   }
 
   // `{ name: foo }` => Node { type: "ObjectExpression", properties: [...] }
@@ -68,6 +102,26 @@ export default function ({ types: t, template }) {
   const VISITED_KEY = 'vdux-transform-' + Date.now()
 
   const componentVisitor = {
+    FunctionDeclaration (path) {
+      if (path.node[VISITED_KEY] || !isFunctionalComponent(path)) {
+        return
+      }
+
+      path.node[VISITED_KEY] = true
+
+      const componentName = getDisplayName(path.node)
+      const componentId = componentName || path.scope.generateUid('component')
+      const isInFunction = hasParentFunction(path)
+
+      this.components.push({
+        id: componentId,
+        name: componentName,
+        isInFunction: isInFunction
+      })
+
+      path.replaceWith(wrapFunctionComponent(path.node, componentId, this.wrapperFunctionId))
+    },
+
     CallExpression (path) {
       if (path.node[VISITED_KEY] || !isHocComponent(path.node, this.options.hoc)) {
         return
