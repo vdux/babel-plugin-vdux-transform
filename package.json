@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-vdux-transform",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Babel plugin to instrument vdux components with custom transforms",
   "main": "lib/index.js",
   "repository": {
