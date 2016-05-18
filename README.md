@@ -8,8 +8,8 @@ This plugin doesn't do anything on its own, it just enables you to write transfo
 
 ```javascript
 {
-  plugins: [
-    ["react-transform", {
+  "plugins": [
+    ["vdux-transform", {
       "transforms": [{
         // can be an NPM module name or a local path
         "transform": "vdux-transform-hmr"
@@ -39,5 +39,22 @@ function transform (opts) {
       ...component,
     }
   }
+}
+```
+
+## Higher-order components
+
+You may also specify an `hoc` config option which allows you to specify which functions return higher-order components (an example would be [vdux-summon](https://github.com/vdux-components/summon)):
+
+```javascript
+{
+  "plugins": [
+    ["vdux-transform", {
+      "hoc": ["summon"],
+      "transforms": [{
+        "transform": "vdux-transform-hmr"
+      }]
+    }]
+  ]
 }
 ```

@@ -17,6 +17,17 @@ export default function ({ types: t, template }) {
     })
   }
 
+  function isHocComponent (node, hoc) {
+    if (t.isCallExpression(node)) {
+      if (t.isCallExpression(node.callee)) {
+        return t.isIdentifier(node.callee.callee)
+          && hoc.indexOf(node.callee.callee.name) !== -1
+      }
+    }
+
+    return false
+  }
+
   // `foo({ displayName: 'NAME' })` => 'NAME'
   function getDisplayName (node) {
     const property = find(node.properties, node => node.key.name === 'displayName')
@@ -57,6 +68,26 @@ export default function ({ types: t, template }) {
   const VISITED_KEY = 'vdux-transform-' + Date.now()
 
   const componentVisitor = {
+    CallExpression (path) {
+      if (path.node[VISITED_KEY] || !isHocComponent(path.node, this.options.hoc)) {
+        return
+      }
+
+      path.node[VISITED_KEY] = true
+
+      const componentName = getDisplayName(path.node)
+      const componentId = componentName || path.scope.generateUid('component')
+      const isInFunction = hasParentFunction(path)
+
+      this.components.push({
+        id: componentId,
+        name: componentName,
+        isInFunction: isInFunction
+      })
+
+      path.replaceWith(wrapComponent(path.node, componentId, this.wrapperFunctionId))
+    },
+
     ObjectExpression (path) {
       if (path.node[VISITED_KEY] || !isVduxLikeComponentObject(path.node)) {
         return
@@ -105,6 +136,7 @@ export default function ({ types: t, template }) {
 
     normalizeOptions (options) {
       return {
+        hoc: options.hoc || [],
         transforms: options.transforms.map(opts => {
           return {
             transform: opts.transform,
@@ -145,7 +177,8 @@ export default function ({ types: t, template }) {
       this.file.path.traverse(componentVisitor, {
         wrapperFunctionId: wrapperFunctionId,
         components: components,
-        currentlyInFunction: false
+        currentlyInFunction: false,
+        options: this.options
       })
 
       return components
