@@ -17,6 +17,10 @@ export default function ({ types: t, template }) {
     })
   }
 
+  function isVduxLikeComponent (node) {
+    return t.isCallExpression(node) && node.callee.name === 'component' && isVduxLikeComponentObject(node.arguments[0])
+  }
+
   function isHocComponent (node, hoc) {
     if (t.isCallExpression(node)) {
       if (t.isCallExpression(node.callee)) {
@@ -123,33 +127,12 @@ export default function ({ types: t, template }) {
     },
 
     CallExpression (path) {
-      if (path.node[VISITED_KEY] || !isHocComponent(path.node, this.options.hoc)) {
+      if (path.node[VISITED_KEY] || (!isHocComponent(path.node, this.options.hoc) && !isVduxLikeComponent(path.node))) {
         return
       }
 
       path.node[VISITED_KEY] = true
 
-      const componentName = getDisplayName(path.node)
-      const componentId = componentName || path.scope.generateUid('component')
-      const isInFunction = hasParentFunction(path)
-
-      this.components.push({
-        id: componentId,
-        name: componentName,
-        isInFunction: isInFunction
-      })
-
-      path.replaceWith(wrapComponent(path.node, componentId, this.wrapperFunctionId))
-    },
-
-    ObjectExpression (path) {
-      if (path.node[VISITED_KEY] || !isVduxLikeComponentObject(path.node)) {
-        return
-      }
-
-      path.node[VISITED_KEY] = true
-
-      // `foo({ displayName: 'NAME' })` => 'NAME'
       const componentName = getDisplayName(path.node)
       const componentId = componentName || path.scope.generateUid('component')
       const isInFunction = hasParentFunction(path)
@@ -162,6 +145,27 @@ export default function ({ types: t, template }) {
 
       path.replaceWith(wrapComponent(path.node, componentId, this.wrapperFunctionId))
     }
+
+    // ObjectExpression (path) {
+    //   if (path.node[VISITED_KEY] || !isVduxLikeComponentObject(path.node)) {
+    //     return
+    //   }
+
+    //   path.node[VISITED_KEY] = true
+
+    //   // `foo({ displayName: 'NAME' })` => 'NAME'
+    //   const componentName = getDisplayName(path.node)
+    //   const componentId = componentName || path.scope.generateUid('component')
+    //   const isInFunction = hasParentFunction(path)
+
+    //   this.components.push({
+    //     id: componentId,
+    //     name: componentName,
+    //     isInFunction: isInFunction
+    //   })
+
+    //   path.replaceWith(wrapComponent(path.node, componentId, this.wrapperFunctionId))
+    // }
   }
 
   class VduxTransformBuilder {
