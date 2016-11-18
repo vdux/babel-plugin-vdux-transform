@@ -32,6 +32,17 @@ export default function ({ types: t, template }) {
     return false
   }
 
+  function isDefaultExport (path) {
+    let p = path
+
+    while (p.parentPath) {
+      if (p.type === 'ExportDefaultDeclaration') return true
+      p = p.parentPath
+    }
+
+    return false
+  }
+
   function isFunctionalComponent (path) {
     const node = path.node
 
@@ -95,6 +106,14 @@ export default function ({ types: t, template }) {
     return t.objectExpression(properties)
   }
 
+  function filenameToComponentName (basename, filename) {
+    if (basename === 'index') {
+      return path.basename(path.dirname(filename))
+    }
+
+    return basename
+  }
+
   const wrapperFunctionTemplate = template(`
     function WRAPPER_FUNCTION_ID(ID_PARAM) {
       return function(COMPONENT_PARAM) {
@@ -127,8 +146,29 @@ export default function ({ types: t, template }) {
     },
 
     CallExpression (path) {
-      if (path.node[VISITED_KEY] || (!isHocComponent(path.node, this.options.hoc) && !isVduxLikeComponent(path.node))) {
+      const isHoc = isHocComponent(path.node, this.options.hoc)
+      if (path.node[VISITED_KEY] || (!isHoc && !isVduxLikeComponent(path.node))) {
         return
+      }
+
+      if (!isHoc && isDefaultExport(path)) {
+        const name = filenameToComponentName(this.file.opts.basename, this.file.opts.filename)
+        const props = path.node.arguments[0].properties
+
+        for (let i = 0; i < props.length; i++) {
+          const prop = props[i]
+          const key = t.toComputedKey(prop)
+
+          if (t.isLiteral(key, {value: 'name'})) {
+            return
+          }
+        }
+
+        props.unshift(t.objectProperty(
+            t.identifier('name'),
+            t.stringLiteral(name)
+          )
+        )
       }
 
       path.node[VISITED_KEY] = true
@@ -236,6 +276,7 @@ export default function ({ types: t, template }) {
         wrapperFunctionId: wrapperFunctionId,
         components: components,
         currentlyInFunction: false,
+        file: this.file,
         options: this.options
       })
 
